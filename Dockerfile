@@ -1,12 +1,26 @@
-FROM node:22-alpine
+FROM node:22-alpine AS build
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm config set fetch-retries 5 \
+  && npm config set fetch-retry-maxtimeout 600000 \
+  && npm ci
 
 COPY . .
 RUN npm run build:prod
+
+FROM node:22-alpine AS runtime
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/config ./config
 
 EXPOSE 8084 8087
 
