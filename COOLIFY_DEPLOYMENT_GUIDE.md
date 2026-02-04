@@ -7,12 +7,14 @@ This guide will help you deploy the ChurchApps API on your VPS using Coolify ins
 ## Overview
 
 **What is Coolify?**
+
 - Self-hosted alternative to Heroku/Vercel/Netlify
 - Runs on your own VPS
 - Built-in support for Docker, databases, and deployments
 - Free and open-source
 
 **What you'll set up:**
+
 - Node.js API application
 - Single MySQL instance with 7 databases (one per module, including reporting)
 - Automatic deployments from GitHub
@@ -27,6 +29,7 @@ This guide will help you deploy the ChurchApps API on your VPS using Coolify ins
 - ✅ GitHub repository access
 - ✅ Domain name (gsdavao.org)
 - ✅ SSH access to your VPS
+  s
 
 ---
 
@@ -41,11 +44,13 @@ This guide will help you deploy the ChurchApps API on your VPS using Coolify ins
 ### Check System Requirements
 
 **Minimum VPS specifications:**
+
 - **RAM**: 4GB (2GB for API + 2GB for databases)
 - **Storage**: 20GB available
 - **CPU**: 2 cores recommended
 
 **Check resources in Coolify:**
+
 1. Go to **Settings** → **Server**
 2. Check available resources
 3. Ensure sufficient space and memory
@@ -61,6 +66,7 @@ You will use **one** MySQL container and create all required databases inside it
    - **Port**: `3306`
 
 2. Connect to the database via terminal:
+
 ```bash
 # SSH into your VPS
 ssh user@your-vps-ip
@@ -70,6 +76,7 @@ docker exec -it <mysql-container-id> mysql -u root -p
 ```
 
 3. Create all **7** databases (includes reporting):
+
 ```sql
 CREATE DATABASE membership;
 CREATE DATABASE attendance;
@@ -107,6 +114,7 @@ mysql://churchapps:password@churchapps-mysql:3306/reporting
 ```
 
 Optional (Doing module also needs membership access):
+
 ```
 mysql://churchapps:password@churchapps-mysql:3306/membership
 ```
@@ -132,7 +140,7 @@ A `.dockerignore` is included to keep builds fast and clean.
 If you prefer docker-compose (not required since DBs are managed separately):
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   api:
@@ -171,6 +179,7 @@ services:
 ### Configure GitHub Connection
 
 If using private repository:
+
 1. Connect your GitHub account
 2. Select organization: `ChurchApps`
 3. Select repository: `Api`
@@ -179,12 +188,14 @@ If using private repository:
 ### Application Settings
 
 **General:**
+
 - **Name**: `churchapps-api`
 - **Domain**: `api.gsdavao.org`
 - **Port**: `8084` (uses `SERVER_PORT`, falls back to `PORT`)
 - **Build Pack**: Docker (recommended)
 
 **Build Configuration:**
+
 - **Dockerfile**: `./Dockerfile`
 - **Docker Compose**: `./docker-compose.yml` (if using compose)
 - **Build Command**: `npm run build:prod` (if using Nixpacks)
@@ -222,11 +233,13 @@ DOING_MEMBERSHIP_CONNECTION_STRING=mysql://churchapps:password@churchapps-mysql:
 
 Replace `password` with your actual database password.
 Note: `API_URL` and `MESSAGING_API` override the default values in `config/prod.json` (which point to `api.churchapps.org`).
+
 ### WebSockets (Messaging)
 
 To enable real-time messaging, set `DELIVERY_PROVIDER=local`, expose `SOCKET_PORT`, and configure `SOCKET_URL`.
 
 Examples:
+
 ```
 # If proxied through your main domain
 SOCKET_URL=wss://api.gsdavao.org/ws
@@ -265,6 +278,7 @@ SOCKET_URL=ws://api.gsdavao.org:8087
 Go to your DNS provider and add an A record:
 
 **DNS Configuration:**
+
 - **Type**: A
 - **Name**: `api` (creates api.gsdavao.org)
 - **Value**: Your VPS IP address (e.g., `123.45.67.89`)
@@ -329,6 +343,7 @@ In your application, add these cron jobs:
 If you prefer different times, adjust the cron expressions.
 
 ---
+
 ## Part 8: Database Migrations
 
 ### Run Migrations Manually
@@ -366,6 +381,7 @@ This runs migrations automatically on each deployment.
 ### View Logs
 
 In Coolify:
+
 1. Go to your application
 2. Click **Logs** tab
 3. See real-time application logs
@@ -385,6 +401,7 @@ In Coolify:
 ### Scale Application (Optional)
 
 If you need more resources:
+
 1. Update **Resource Limits**:
    - **CPU**: 2 cores
    - **Memory**: 2GB
@@ -397,6 +414,7 @@ If you need more resources:
 ### Understanding ChurchApps Email System
 
 The ChurchApps API **already has email functionality built-in** via the `@churchapps/apihelper` package. It includes:
+
 - Password reset emails
 - Welcome emails with temporary passwords
 - User notifications
@@ -411,6 +429,7 @@ The API typically supports SMTP configuration. You have several options:
 #### Option 1: Use Gmail SMTP (Easiest for Testing)
 
 **Setup:**
+
 1. Enable 2-factor authentication on your Gmail account
 2. Create an "App Password":
    - Go to https://myaccount.google.com/security
@@ -420,6 +439,7 @@ The API typically supports SMTP configuration. You have several options:
 3. Save the 16-character password
 
 **Environment Variables:**
+
 ```env
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
@@ -431,6 +451,7 @@ SMTP_FROM_NAME=ChurchApps API
 ```
 
 **Limitations:**
+
 - Gmail limits: 500 emails/day
 - May be flagged as spam for bulk emails
 - Not ideal for production
@@ -438,12 +459,14 @@ SMTP_FROM_NAME=ChurchApps API
 #### Option 2: SendGrid (Recommended for Production)
 
 **Why SendGrid?**
+
 - ✅ 100 emails/day FREE forever
 - ✅ Professional email delivery
 - ✅ Great deliverability rates
 - ✅ Simple SMTP setup
 
 **Setup:**
+
 1. Go to https://sendgrid.com
 2. Sign up for free account
 3. Verify your email
@@ -453,6 +476,7 @@ SMTP_FROM_NAME=ChurchApps API
    - Copy the key (starts with `SG.`)
 
 **Environment Variables:**
+
 ```env
 SMTP_HOST=smtp.sendgrid.net
 SMTP_PORT=587
@@ -464,6 +488,7 @@ SMTP_FROM_NAME=GS Davao ChurchApps
 ```
 
 **Important**: Verify your sender email in SendGrid:
+
 1. Go to Settings → Sender Authentication
 2. Verify a Single Sender
 3. Use `noreply@gsdavao.org` or your preferred email
@@ -471,6 +496,7 @@ SMTP_FROM_NAME=GS Davao ChurchApps
 #### Option 3: Resend (Modern Alternative)
 
 **Setup:**
+
 1. Go to https://resend.com
 2. Sign up for free account
 3. Add your domain `gsdavao.org`:
@@ -479,6 +505,7 @@ SMTP_FROM_NAME=GS Davao ChurchApps
 4. Create API key
 
 **Environment Variables (SMTP):**
+
 ```env
 MAIL_SYSTEM=SMTP
 SMTP_HOST=smtp.resend.com
@@ -487,17 +514,20 @@ SMTP_USER=resend
 SMTP_PASS=re_your-resend-api-key
 SUPPORT_EMAIL=noreply@gsdavao.org
 ```
+
 Note: With `SMTP_SECURE=true`, nodemailer uses port `465` by default (matches Resend).
 
 #### Option 4: Mailgun (Reliable, 5000 emails/month free)
 
 **Setup:**
+
 1. Go to https://www.mailgun.com
 2. Sign up for free account
 3. Verify your domain
 4. Get SMTP credentials
 
 **Environment Variables:**
+
 ```env
 SMTP_HOST=smtp.mailgun.org
 SMTP_PORT=587
@@ -517,6 +547,7 @@ SMTP_FROM_NAME=GS Davao ChurchApps
 5. **Restart** the application
 
 **Example for SendGrid:**
+
 ```
 SMTP_HOST=smtp.sendgrid.net
 SMTP_PORT=587
@@ -552,6 +583,7 @@ This is useful for local testing without setting up SMTP.
 #### Email Not Sending
 
 **Check Coolify logs:**
+
 ```bash
 # Look for email errors
 docker logs <api-container-name> | grep -i email
@@ -559,12 +591,14 @@ docker logs <api-container-name> | grep -i smtp
 ```
 
 **Common issues:**
+
 1. Wrong SMTP credentials
 2. Port blocked by firewall (try port 465 instead of 587)
 3. Sender email not verified
 4. SMTP server blocks your VPS IP
 
 **Solutions:**
+
 - Verify all SMTP environment variables are correct
 - Check email provider dashboard for errors
 - Ensure your VPS allows outbound SMTP connections
@@ -573,6 +607,7 @@ docker logs <api-container-name> | grep -i smtp
 #### Emails Going to Spam
 
 **Solutions:**
+
 1. **Verify your domain** with email provider
 2. **Set up SPF record**:
    ```
@@ -598,6 +633,7 @@ docker logs <api-container-name> | grep -i smtp
 4. **Monitor usage** in SendGrid dashboard
 
 **Environment variables:**
+
 ```env
 SMTP_HOST=smtp.sendgrid.net
 SMTP_PORT=587
@@ -611,6 +647,7 @@ SMTP_FROM_NAME=GS Davao Church
 ### Email Templates
 
 The ChurchApps API uses built-in email templates. If you need to customize them, check:
+
 - `/src/email-templates/` (if exists)
 - Or modify in the `@churchapps/apihelper` package
 
@@ -657,17 +694,17 @@ crontab -e
 
 ## Comparison: Coolify vs AWS
 
-| Feature | AWS | Coolify |
-|---------|-----|---------|
-| **Cost** | $70-100/month | $5-20/month (VPS only) |
-| **Setup Time** | 2-3 hours | 30-60 minutes |
-| **Complexity** | High | Low |
-| **Control** | Limited | Full |
-| **Scaling** | Automatic | Manual |
-| **SSL Certificate** | Free (ACM) | Free (Let's Encrypt) |
-| **Databases** | RDS (managed) | Self-managed |
-| **Backups** | Automatic | Manual setup |
-| **Vendor Lock-in** | High | None |
+| Feature             | AWS           | Coolify                |
+| ------------------- | ------------- | ---------------------- |
+| **Cost**            | $70-100/month | $5-20/month (VPS only) |
+| **Setup Time**      | 2-3 hours     | 30-60 minutes          |
+| **Complexity**      | High          | Low                    |
+| **Control**         | Limited       | Full                   |
+| **Scaling**         | Automatic     | Manual                 |
+| **SSL Certificate** | Free (ACM)    | Free (Let's Encrypt)   |
+| **Databases**       | RDS (managed) | Self-managed           |
+| **Backups**         | Automatic     | Manual setup           |
+| **Vendor Lock-in**  | High          | None                   |
 
 ---
 
@@ -676,6 +713,7 @@ crontab -e
 ### Issue 1: Cannot connect to databases
 
 **Solution**: Check network connectivity
+
 ```bash
 # Access API container
 docker exec -it <api-container> sh
@@ -693,13 +731,15 @@ mysql -h churchapps-mysql -u churchapps -p membership
 
 ### Issue 3: Out of memory
 
-**Solution**: 
+**Solution**:
+
 1. Increase VPS resources
 2. Or use single MySQL instance with multiple databases (uses less memory)
 
 ### Issue 4: SSL certificate not working
 
 **Solution**:
+
 1. Ensure DNS points to correct IP
 2. Wait for DNS propagation
 3. Check Coolify logs for Let's Encrypt errors
@@ -708,6 +748,7 @@ mysql -h churchapps-mysql -u churchapps -p membership
 ### Issue 5: Build fails
 
 **Solution**: Check logs in Coolify
+
 - Missing dependencies? Add to package.json
 - TypeScript errors? Fix and push again
 - Build command wrong? Update in Coolify settings
@@ -719,6 +760,7 @@ mysql -h churchapps-mysql -u churchapps -p membership
 ### 1. Enable Redis Caching
 
 Add Redis in Coolify:
+
 ```yaml
 services:
   redis:
@@ -731,6 +773,7 @@ Update API to use Redis for caching.
 ### 2. Set Up Nginx Reverse Proxy
 
 Coolify handles this automatically, but you can customize:
+
 - Enable gzip compression
 - Add caching headers
 - Rate limiting
@@ -749,6 +792,7 @@ CREATE INDEX idx_member_status ON members(status);
 ### 4. Monitor Resources
 
 Use Coolify's built-in monitoring:
+
 1. CPU usage
 2. Memory usage
 3. Disk usage
@@ -761,14 +805,17 @@ Use Coolify's built-in monitoring:
 ### VPS Options
 
 **DigitalOcean Droplet:**
+
 - 4GB RAM, 2 CPU: $24/month
 - 8GB RAM, 4 CPU: $48/month
 
 **Hetzner:**
+
 - 4GB RAM, 2 CPU: €4.50/month (~$5)
 - 8GB RAM, 4 CPU: €7.50/month (~$8)
 
 **Linode:**
+
 - 4GB RAM, 2 CPU: $24/month
 
 **Recommended**: Hetzner (best value) or DigitalOcean (reliable)
@@ -816,6 +863,7 @@ Test all endpoints work correctly.
 ## Summary
 
 ✅ **Coolify Advantages:**
+
 - Much cheaper ($5-20 vs $70-100/month)
 - Simpler setup and management
 - Full control over everything
@@ -823,6 +871,7 @@ Test all endpoints work correctly.
 - Great for small to medium projects
 
 ✅ **Setup Steps:**
+
 1. Create one MySQL instance and 7 databases in Coolify
 2. Add Dockerfile to repository
 3. Create application in Coolify
@@ -832,6 +881,7 @@ Test all endpoints work correctly.
 7. Done!
 
 ✅ **Best Practices:**
+
 - Use single MySQL instance with multiple databases (saves memory)
 - Set up automatic backups
 - Monitor resource usage
@@ -843,12 +893,3 @@ Test all endpoints work correctly.
 **Monthly cost**: $5-20 (vs $70-100 on AWS)
 
 🚀 **You're ready to deploy!**
-
-
-
-
-
-
-
-
-

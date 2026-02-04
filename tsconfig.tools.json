@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.prod.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist",
+    "declaration": false,
+    "declarationMap": false,
+    "incremental": false
+  },
+  "include": [
+    "tools/initdb.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tools/**/*.spec.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/playground/**/*"
+  ]
+}

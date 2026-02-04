@@ -10,7 +10,10 @@ RUN npm config set fetch-retries 5 \
   && npm ci --include=dev
 
 COPY . .
-RUN npm run build:prod
+RUN npm run build:prod \
+  && npm run build:tools \
+  && mkdir -p dist/tools \
+  && cp -r tools/dbScripts dist/tools/dbScripts
 
 FROM node:22-alpine AS runtime
 
