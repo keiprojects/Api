@@ -10,6 +10,7 @@
 - Adjusted timer handler types to avoid build failure when `ScheduledEvent` is unavailable.
 - Added a Dockerfile healthcheck that calls `/health` on port 8084.
 - Switched the Dockerfile to a multi-stage build to keep dev deps in build only.
+- Ensured build stage installs dev deps even when NODE_ENV=production at build time.
 - Allowed overriding module API URLs via environment variables (e.g., `API_URL`, `MESSAGING_API`).
 - Reworked `COOLIFY_DEPLOYMENT_GUIDE.md` to align with a single MySQL instance, correct env vars, WebSocket setup, and cron jobs.
 
@@ -22,6 +23,7 @@
 - **Readiness check**: Validates critical env vars and prevents accidental default config usage before deploy.
 - **Healthcheck**: Coolify/Docker can now detect app health via the `/health` endpoint.
 - **Build reliability**: Multi-stage build installs dev deps only during build and keeps the runtime image lean.
+- **Build env**: Build stage now forces dev dependency install to avoid `rimraf` missing errors.
 - **Production guard**: The API now fails fast if required env vars are missing or default ChurchApps URLs are detected in prod.
 - **API URL overrides**: Non-ChurchApps deployments can now set base/module URLs without editing `config/prod.json`.
 - **Single MySQL instance**: Matches your target architecture and reduces memory usage.

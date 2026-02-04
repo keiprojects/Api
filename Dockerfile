@@ -2,10 +2,12 @@ FROM node:22-alpine AS build
 
 WORKDIR /app
 
+ENV NODE_ENV=development
+
 COPY package*.json ./
 RUN npm config set fetch-retries 5 \
   && npm config set fetch-retry-maxtimeout 600000 \
-  && npm ci
+  && npm ci --include=dev
 
 COPY . .
 RUN npm run build:prod
