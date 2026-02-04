@@ -92,20 +92,27 @@ export class Environment extends EnvironmentBase {
     if (environment === "prod") file = "prod.json";
     console.log(`📄 Loading config file: ${file}`);
 
-    // In Lambda, __dirname is /var/task/dist/src/shared/helpers
-    // Config files are at /var/task/config
+    // Resolve config path across both build outputs:
+    // - dist/shared/helpers (main app build)
+    // - dist/src/shared/helpers (tools build)
+    // and Lambda layout (/var/task/config).
     let physicalPath: string;
 
     // Check if we're in actual Lambda (not serverless-local)
     const isActualLambda = process.env.AWS_LAMBDA_FUNCTION_NAME && __dirname.startsWith("/var/task");
 
     if (isActualLambda) {
-      // In Lambda, config is at root level
       physicalPath = path.resolve("/var/task/config", file);
     } else {
-      // In local development, resolve from the project root
-      const projectRoot = path.resolve(__dirname, "../../../");
-      physicalPath = path.resolve(projectRoot, "config", file);
+      const candidateRoots = [
+        path.resolve(__dirname, "../../../"), // works for dist/shared/helpers
+        path.resolve(__dirname, "../../../../"), // works for dist/src/shared/helpers
+        path.resolve(__dirname, "../../.."), // works for src/shared/helpers in local TS runtime
+      ];
+
+      const candidatePaths = candidateRoots.map((root) => path.resolve(root, "config", file));
+      const foundPath = candidatePaths.find((p) => fs.existsSync(p));
+      physicalPath = foundPath || candidatePaths[0];
     }
 
     const json = fs.readFileSync(physicalPath, "utf8");

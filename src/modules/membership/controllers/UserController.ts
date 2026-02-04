@@ -245,11 +245,20 @@ export class UserController extends MembershipBaseController {
         // Create userChurch records for matching people in groups
         await UserChurchHelper.createForNewUser(user.id, user.email);
 
-        // Add first user to server admins group
+        // Add first user to server admins group when a role exists.
+        // In schema-only environments there may be zero roles until bootstrapped.
         if (userCount === 0) {
-          this.repos.role.loadAll().then((roles) => {
-            this.repos.roleMember.save({ roleId: roles[0].id, userId: user.id, addedBy: user.id });
-          });
+          try {
+            const roles = await this.repos.role.loadAll();
+            const adminRole = roles.find((r) => r.name === "Server Admins") || roles[0];
+            if (adminRole?.id) {
+              await this.repos.roleMember.save({ roleId: adminRole.id, userId: user.id, addedBy: user.id });
+            } else {
+              console.warn("Skipping first-user role assignment: no roles found. Run role bootstrap script.");
+            }
+          } catch (e) {
+            console.error("Failed to assign first-user admin role:", e);
+          }
         }
       }
       user.password = null;
