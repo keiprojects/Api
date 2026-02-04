@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.github
+.env
+.env.*
+coverage
+.serverless
+reports
+playground-app
+*.md
+npm-debug.log
+Dockerfile
+docker-compose.yml

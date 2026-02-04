@@ -112,9 +112,13 @@ export class Environment extends EnvironmentBase {
     const data = JSON.parse(json);
     await this.populateBase(data, "API", environment);
 
+    // Hard stop in production if critical env vars are missing or defaults are used
+    this.validateProductionConfig(data, environment);
+
     // Set current environment and server config
     this.currentEnvironment = environment;
-    this.port = process.env.SERVER_PORT ? parseInt(process.env.SERVER_PORT) : 8084;
+    const serverPort = process.env.SERVER_PORT || process.env.PORT;
+    this.port = serverPort ? parseInt(serverPort) : 8084;
     this.socketUrl = process.env.SOCKET_URL;
 
     // Legacy environment variable support
@@ -146,13 +150,57 @@ export class Environment extends EnvironmentBase {
   }
 
   private static initializeModuleConfigs(config: any) {
+    // Base API URL can be overridden via environment variables for non-ChurchApps deployments
+    const apiUrl = process.env.API_URL || config.apiUrl;
+
     // These can be overridden in monolith for internal calls
-    this.membershipApi = config.membershipApi || config.apiUrl + "/membership";
-    this.attendanceApi = config.attendanceApi || config.apiUrl + "/attendance";
-    this.contentApi = config.contentApi || config.apiUrl + "/content";
-    this.givingApi = config.givingApi || config.apiUrl + "/giving";
-    this.messagingApi = config.messagingApi || config.apiUrl + "/messaging";
-    this.doingApi = config.doingApi || config.apiUrl + "/doing";
+    this.membershipApi = process.env.MEMBERSHIP_API || config.membershipApi || apiUrl + "/membership";
+    this.attendanceApi = process.env.ATTENDANCE_API || config.attendanceApi || apiUrl + "/attendance";
+    this.contentApi = process.env.CONTENT_API || config.contentApi || apiUrl + "/content";
+    this.givingApi = process.env.GIVING_API || config.givingApi || apiUrl + "/giving";
+    this.messagingApi = process.env.MESSAGING_API || config.messagingApi || apiUrl + "/messaging";
+    this.doingApi = process.env.DOING_API || config.doingApi || apiUrl + "/doing";
+  }
+
+  private static validateProductionConfig(config: any, environment: string) {
+    if (environment !== "prod") return;
+
+    const required = [
+      "API_URL",
+      "MESSAGING_API",
+      "SERVER_PORT",
+      "SOCKET_URL",
+      "MAIL_SYSTEM",
+      "SMTP_HOST",
+      "SMTP_USER",
+      "SMTP_PASS",
+      "ENCRYPTION_KEY",
+      "JWT_SECRET",
+      "SUPPORT_EMAIL",
+      "MEMBERSHIP_CONNECTION_STRING",
+      "ATTENDANCE_CONNECTION_STRING",
+      "CONTENT_CONNECTION_STRING",
+      "GIVING_CONNECTION_STRING",
+      "MESSAGING_CONNECTION_STRING",
+      "DOING_CONNECTION_STRING",
+      "REPORTING_CONNECTION_STRING"
+    ];
+
+    const isPlaceholder = (value?: string) => !value || value.trim().length === 0 || value.includes("REPLACE_ME");
+    const missing = required.filter((key) => isPlaceholder(process.env[key]));
+
+    if (missing.length > 0) {
+      throw new Error(`Missing required production environment variables: ${missing.join(", ")}`);
+    }
+
+    const apiUrl = process.env.API_URL || config.apiUrl || "";
+    if (apiUrl.includes("churchapps.org")) {
+      throw new Error("API_URL must point to your deployment domain (not api.churchapps.org).");
+    }
+
+    if (process.env.MAIL_SYSTEM !== "SMTP") {
+      throw new Error("MAIL_SYSTEM must be set to SMTP for Coolify (non-AWS) deployments.");
+    }
   }
 
   private static async initializeDatabaseConnections(config: any) {
@@ -245,6 +293,9 @@ export class Environment extends EnvironmentBase {
     this.googleRecaptchaSecretKey = process.env.GOOGLE_RECAPTCHA_SECRET_KEY || "";
     this.openRouterApiKey = process.env.OPENROUTER_API_KEY || "";
     this.openAiApiKey = process.env.OPENAI_API_KEY || "";
+
+    // Ensure EmailHelper (EnvironmentBase) honors MAIL_SYSTEM overrides
+    EnvironmentBase.mailSystem = this.mailSystem;
 
     console.log("✅ Configuration parameters loaded from environment variables");
   }

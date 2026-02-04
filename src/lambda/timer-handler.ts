@@ -1,4 +1,4 @@
-import { ScheduledEvent, Context } from "aws-lambda";
+import { Context } from "aws-lambda";
 
 import { Environment } from "../shared/helpers/Environment.js";
 import { TypedDB } from "../shared/infrastructure/TypedDB.js";
@@ -27,7 +27,7 @@ const initEnv = async () => {
   console.log("[initEnv] Environment initialization complete");
 };
 
-export const handle15MinTimer = async (_event: ScheduledEvent, _context: Context): Promise<void> => {
+export const handle15MinTimer = async (_event: any, _context: Context): Promise<void> => {
   const startTime = Date.now();
   console.log("[handle15MinTimer] ========== TIMER START ==========");
   console.log("[handle15MinTimer] Timestamp:", new Date().toISOString());
@@ -59,7 +59,7 @@ export const handle15MinTimer = async (_event: ScheduledEvent, _context: Context
   }
 };
 
-export const handleMidnightTimer = async (_event: ScheduledEvent, _context: Context): Promise<void> => {
+export const handleMidnightTimer = async (_event: any, _context: Context): Promise<void> => {
   const startTime = Date.now();
   console.log("[handleMidnightTimer] ========== TIMER START ==========");
   console.log("[handleMidnightTimer] Timestamp:", new Date().toISOString());
@@ -98,7 +98,7 @@ export const handleMidnightTimer = async (_event: ScheduledEvent, _context: Cont
   }
 };
 
-export const handleScheduledTasks = async (_event: ScheduledEvent, _context: Context): Promise<void> => {
+export const handleScheduledTasks = async (_event: any, _context: Context): Promise<void> => {
   try {
     await initEnv();
 
